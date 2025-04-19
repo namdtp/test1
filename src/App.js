@@ -7,6 +7,8 @@ import Staff from './components/Staff';
 import Kitchen from './components/Kitchen';
 import Manager from './components/Manager';
 import Tables from './components/Tables';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 const App = () => {
   const [user, loading] = useAuthState(auth);
