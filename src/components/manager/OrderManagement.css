@@ -1,0 +1,33 @@
+.order-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  
+  .order-chip {
+    margin-right: 8px;
+    cursor: pointer;
+  }
+  
+  .order-history {
+    padding-left: 20px;
+  }
+  
+  @media (max-width: 600px) {
+    .order-summary {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .order-chip {
+      margin-right: 0;
+      margin-top: 4px;
+    }
+  
+    .order-history {
+      font-size: 14px;
+    }
+  }
+  

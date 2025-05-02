@@ -7,8 +7,12 @@ import Staff from './components/Staff';
 import Kitchen from './components/Kitchen';
 import Manager from './components/Manager';
 import Tables from './components/Tables';
+import Order from './components/Order';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import '@fontsource/roboto'
+import { CssBaseline } from '@mui/material';
+
 
 const App = () => {
   const [user, loading] = useAuthState(auth);
@@ -34,6 +38,10 @@ const App = () => {
         <Route
           path="/tables"
           element={user ? <Tables /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/order"
+          element={user ? <Order /> : <Navigate to="/login" />}
         />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

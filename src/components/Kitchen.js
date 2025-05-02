@@ -1,115 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { collection, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db, auth } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
+import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import {
+  Box, Typography, Paper, Table, TableHead, TableRow, TableCell,
+  TableBody, Stack, Divider
+} from '@mui/material';
+import './Staff.css'; // dùng chung style với staff
 
 const Kitchen = () => {
   const [orders, setOrders] = useState([]);
-  const [userEmail, setUserEmail] = useState('');
-  const navigate = useNavigate();
+  const [menuMap, setMenuMap] = useState({});
 
   useEffect(() => {
-    fetchOrders();
-    fetchUserEmail();
+    const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(order => order.status === 'pending')
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      setOrders(data);
+    });
+    return () => unsub();
   }, []);
 
-  const fetchOrders = () => {
-    onSnapshot(collection(db, 'orders'), (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setOrders(data.filter(order => order.status === 'pending'));
+  useEffect(() => {
+    const unsubMenu = onSnapshot(collection(db, 'menu'), (snapshot) => {
+      const map = {};
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name) map[data.name] = data;
+      });
+      setMenuMap(map);
     });
+    return () => unsubMenu();
+  }, []);
+
+  const updateItemStatus = async (orderId, index, status) => {
+    const orderRef = doc(db, 'orders', orderId);
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    const updatedItems = [...order.items];
+    updatedItems[index].status = status;
+    await updateDoc(orderRef, { items: updatedItems });
   };
 
-  const fetchUserEmail = async () => {
-    if (auth.currentUser) {
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      if (userDoc.exists()) {
-        setUserEmail(userDoc.data().email);
-      }
-    }
+  const getDynamicStatus = (item) => {
+    if (item.status === 'served') return 'served';
+    if (item.status === 'cancel') return 'cancel';
+    const now = Date.now();
+    const createdTime = parseInt(item.timestamp);
+    const elapsedMin = (now - createdTime) / 60000;
+    if (elapsedMin > 15) return 'late';
+    return 'pending';
   };
 
-  const updateItemStatus = async (orderId, itemIndex, newStatus) => {
-    try {
-      const order = orders.find(order => order.id === orderId);
-      const updatedItems = [...order.items];
-      updatedItems[itemIndex].status = newStatus;
-      await updateDoc(doc(db, 'orders', orderId), { items: updatedItems });
-    } catch (err) {
-      console.error('Lỗi khi cập nhật trạng thái món:', err);
-    }
-  };
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/login');
-  };
+  const totalPendingItems = orders.reduce((sum, order) =>
+    sum + order.items.filter(item =>
+      item.status === 'pending' &&
+      (menuMap[item.name]?.category || '').toLowerCase() === 'đồ ăn'
+    ).length
+  , 0);
 
   return (
-    <div style={styles.container}>
-      <h2>Bếp - Đơn hàng đang chờ</h2>
-      <p>Email: {userEmail}</p>
-      <button onClick={handleLogout} style={styles.logout}>Đăng xuất</button>
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: '1200px', mx: 'auto' }}>
+      <Typography variant="h5" fontWeight="bold" gutterBottom>
+        🧑‍🍳 Đơn hàng đang chờ bếp ({totalPendingItems} món chờ)
+      </Typography>
 
-      <div style={styles.orderList}>
-        {orders.length === 0 ? (
-          <p>Chưa có đơn hàng nào.</p>
-        ) : (
-          orders.map((order) => (
-            <div key={order.id} style={styles.orderItem}>
-              <div>
-                <span>
-                  #{order.id} - Bàn {order.tableId}: {order.items.map(item => `${item.name} (${item.quantity}) ${item.note ? `(${item.note})` : ''} [${item.status}]`).join(', ')}
-                </span>
-                <div style={styles.timestamp}>
-                  Tạo lúc: {new Date(order.createdAt.seconds * 1000).toLocaleString()}
-                </div>
-              </div>
-              <div style={styles.itemActions}>
-                {order.items.map((item, index) => (
-                  item.status === 'pending' && (
-                    <div key={index} style={styles.itemAction}>
-                      <span>{item.name}:</span>
-                      <button
-                        style={styles.serveButton}
-                        onClick={() => updateItemStatus(order.id, index, 'served')}
-                      >
-                        Đã phục vụ
-                      </button>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+      {orders.map((order) => (
+        <Paper
+          key={order.id}
+          elevation={3}
+          sx={{ p: { xs: 2, md: 3 }, mb: 3, borderRadius: 2 }}
+        >
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            Đơn: {order.orderCode || order.id} • Bàn {order.tableId}
+          </Typography>
+          <Divider sx={{ mb: 1 }} />
+          <Box sx={{ overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Món</strong></TableCell>
+                  <TableCell><strong>Số lượng</strong></TableCell>
+                  <TableCell><strong>Ghi chú</strong></TableCell>
+                  <TableCell><strong>Thời gian</strong></TableCell>
+                  <TableCell><strong>Trạng thái</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {order.items
+                  .filter(item => (menuMap[item.name]?.category || '').toLowerCase() === 'đồ ăn')
+                  .map((item, idx) => {
+                    const status = getDynamicStatus(item);
+                    return (
+                      <TableRow key={idx}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.note || '-'}</TableCell>
+                        <TableCell>
+                          {item.timestamp
+                            ? new Date(item.timestamp).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '---'}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1}>
+                            <span
+                              className={`status-chip status-${status}`}
+                              onClick={item.status === 'pending'
+                                ? () => updateItemStatus(order.id, idx, 'served')
+                                : undefined
+                              }
+                              style={{ cursor: item.status === 'pending' ? 'pointer' : 'default' }}
+                            >
+                              {status === 'pending' ? 'Đang chờ'
+                                : status === 'late' ? 'Quá lâu'
+                                : status === 'served' ? 'Đã xong'
+                                : 'Đã huỷ'}
+                            </span>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
+          </Box>
+        </Paper>
+      ))}
+    </Box>
   );
-};
-
-const styles = {
-  container: { padding: '20px', maxWidth: '800px', margin: '0 auto' },
-  orderList: { marginTop: '20px' },
-  orderItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '10px',
-    borderBottom: '1px solid #eee',
-  },
-  timestamp: { color: '#666', fontSize: '14px', marginTop: '5px' },
-  itemActions: { marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' },
-  itemAction: { display: 'flex', alignItems: 'center', gap: '10px' },
-  serveButton: {
-    padding: '5px 10px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  logout: { position: 'absolute', top: '20px', right: '20px', padding: '10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
 };
 
 export default Kitchen;
