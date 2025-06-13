@@ -5,6 +5,9 @@ import { AppBar, Box, Toolbar, Typography, Button, Container, Grid, Paper } from
 import OrderManagement from './manager/OrderManagement';
 import MenuManagement from './manager/MenuManagement';
 import TableManagement from './manager/TableManagement';
+import RevenueDashboard from './manager/RevenueDashboard';
+import Logs from './manager/Logs';
+
 
 const Manager = () => {
   const [currentTab, setCurrentTab] = React.useState('orders');
@@ -13,6 +16,8 @@ const Manager = () => {
     switch (currentTab) {
       case 'menu': return <MenuManagement />;
       case 'orders': return <OrderManagement />;
+      case 'revenue': return <RevenueDashboard />;
+      case 'logs': return <Logs />;
       default: return <TableManagement />;
     }
   };
@@ -25,8 +30,10 @@ const Manager = () => {
             Quản lý nhà hàng
           </Typography>
           <Button color="inherit" onClick={() => setCurrentTab('orders')}>Đơn hàng</Button>
+          <Button color="inherit" onClick={() => setCurrentTab('logs')}>Logs</Button>
           <Button color="inherit" onClick={() => setCurrentTab('tables')}>Bàn</Button>
           <Button color="inherit" onClick={() => setCurrentTab('menu')}>Thực đơn</Button>
+          <Button color="inherit" onClick={() => setCurrentTab('revenue')}>Thống kê</Button>
         </Toolbar>
       </AppBar>
 

@@ -20,49 +20,51 @@
   font-weight: 600;
 }
 
-/* Trạng thái màu */
+/* Chip trạng thái rõ ràng */
 .status-chip {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
+  padding: 5px 15px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px 0 rgba(30,60,60,0.04);
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
+  margin-right: 4px;
 }
 
 .status-new {
   background-color: #e3f2fd;
   color: #1976d2;
+  border-color: #90caf9;
 }
-
 .status-pending {
   background-color: #fff8e1;
   color: #f57c00;
+  border-color: #ffe082;
 }
-
 .status-late {
-  background-color: #ffebee;
-  color: #d32f2f;
+  background-color: #fff3e0;
+  color: #f4511e;
+  border-color: #ffb74d;
 }
-
 .status-done {
   background-color: #e8f5e9;
-  color: #388e3c;
+  color: #118b36;
+  border-color: #6dd59c;
 }
-
 .status-cancel {
-  background-color: #eeeeee;
-  color: #757575;
+  background-color: #ffebee;
+  color: #d32f2f;
+  border-color: #f99d9d;
 }
 
-/* Icon button edit */
-.action-icon {
-  color: #616161;
-  transition: 0.2s;
-}
-
-.action-icon:hover {
-  color: #1976d2;
+/* Card cho mobile rõ ràng */
+.order-card {
+  box-shadow: 0 4px 16px 0 rgba(60,60,60,0.07);
+  border-radius: 18px !important;
+  padding: 18px !important;
+  background: #fff;
 }
 
 /* Responsive adjustments */
@@ -71,19 +73,13 @@
     font-size: 13px;
     min-width: 100%;
   }
-
   .staff-table th,
   .staff-table td {
     padding: 8px 6px;
   }
-
-  .status-chip {
-    font-size: 11px;
-    padding: 3px 8px;
-  }
-
-  .action-icon {
-    font-size: 18px;
+  .order-card {
+    padding: 13px !important;
+    border-radius: 14px !important;
   }
 }
 
@@ -91,14 +87,12 @@
   .staff-table {
     font-size: 12px;
   }
-
   .staff-table th,
   .staff-table td {
     padding: 6px 4px;
   }
-
-  .status-chip {
-    font-size: 10px;
-    padding: 2px 6px;
+  .order-card {
+    padding: 9px !important;
+    border-radius: 12px !important;
   }
 }

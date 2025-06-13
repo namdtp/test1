@@ -1,33 +1,106 @@
 .order-summary {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    justify-content: space-between;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.order-chip {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.order-history {
+  padding-left: 20px;
+}
+
+/* TABLE STYLE */
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.staff-table th,
+.staff-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.staff-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+/* Trạng thái màu */
+.status-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-new {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-pending {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.status-late {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.status-done,
+.status-served {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-cancel {
+  background-color: #eeeeee;
+  color: #757575;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .order-summary {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  
+
   .order-chip {
-    margin-right: 8px;
-    cursor: pointer;
+    margin-right: 0;
+    margin-top: 4px;
   }
-  
+
   .order-history {
-    padding-left: 20px;
+    font-size: 14px;
   }
-  
-  @media (max-width: 600px) {
-    .order-summary {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  
-    .order-chip {
-      margin-right: 0;
-      margin-top: 4px;
-    }
-  
-    .order-history {
-      font-size: 14px;
-    }
+
+  .staff-table {
+    font-size: 13px;
+    min-width: 100%;
   }
-  
+
+  .staff-table th,
+  .staff-table td {
+    padding: 8px 6px;
+  }
+
+  .status-chip {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}

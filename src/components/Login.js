@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,32 +15,42 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Check active & email (nếu có users collection)
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (!userData.active) {
-          throw new Error('Tài khoản của bạn đã bị vô hiệu hóa!');
-        }
-        // Kiểm tra email trong Firestore khớp với email đăng nhập
-        if (userData.email !== email) {
-          throw new Error('Email không khớp với tài khoản!');
-        }
-        switch (userData.role) {
-          case 'staff':
-            navigate('/tables');
-            break;
-          case 'manager':
-            navigate('/manager');
-            break;
-          case 'kitchen':
-            navigate('/kitchen');
-            break;
-          default:
-            throw new Error('Vai trò không hợp lệ!');
-        }
+      const userData = userDoc.data();
+      if (!userData.active) throw new Error('Tài khoản của bạn đã bị vô hiệu hóa!');
+      if (userData.email !== email) throw new Error('Email không khớp với tài khoản!');
+
+      // Điều hướng theo vai trò
+      if (userData.role === 'kitchen') {
+        navigate('/kitchen');
+      } else if (userData.role === 'staff') {
+        navigate('/staff');
+      } else if (userData.role === 'manager') {
+        navigate('/manager');
       } else {
-        throw new Error('Không tìm thấy thông tin người dùng!');
+        navigate('/tables'); // fallback mặc định
       }
+    } else {
+      navigate('/tables');
+    }
+
+      // Lưu log đăng nhập
+      await addDoc(collection(db, 'logs'), {
+        type: 'login',
+        email: user.email || '',
+        uid: user.uid,
+        timestamp: Date.now(),
+      });
+
+      // Đánh dấu đã login session/tab này (chống lặp log)
+      sessionStorage.setItem('loggedIn', '1');
+      localStorage.setItem('loginTime', Date.now().toString());
+
+      // Điều hướng
+     // hoặc chuyển theo vai trò user nếu cần
     } catch (err) {
       setError(err.message);
     }
@@ -54,14 +64,14 @@ const Login = () => {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
           style={styles.input}
         />
         <input
           type="password"
           placeholder="Mật khẩu"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
           style={styles.input}
         />
         <button type="submit" style={styles.button}>Đăng nhập</button>
