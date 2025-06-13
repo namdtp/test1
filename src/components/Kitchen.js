@@ -9,7 +9,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import './Staff.css';
 import { useMenu } from '../contexts/MenuContext';
 
-const KITCHEN_PRINTER_API = 'http://192.168.1.200:3000/print';
+// const KITCHEN_PRINTER_API = 'http://192.168.1.200:3000/print';
+
+const KITCHEN_PRINTER_API = 'http://localhost:3000/print';
 
 const Kitchen = () => {
   const menuList = useMenu();

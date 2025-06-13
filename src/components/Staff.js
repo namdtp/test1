@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { collection, onSnapshot, doc, getDoc, updateDoc, query, where } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import {
-  Box, Typography, Button, TextField, Stack, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Select, InputLabel, FormControl, Paper, Divider
+  Box, Tooltip, Typography, Button, TextField, Stack, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Select, InputLabel, FormControl, Paper, Divider
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -20,6 +20,10 @@ const Staff = () => {
   const [selectedTable, setSelectedTable] = useState('');
   const [customItemDialogOpen, setCustomItemDialogOpen] = useState(false);
   const [customItem, setCustomItem] = useState({ name: '', price: '', quantity: 1, note: '' });
+
+  const [editOrderNoteDialog, setEditOrderNoteDialog] = useState(false);
+  const [editOrderNote, setEditOrderNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +46,13 @@ const Staff = () => {
     });
     return () => unsub();
   }, [tableId]);
+
+  // Khi chọn chỉnh sửa, tự fill note hiện tại
+  useEffect(() => {
+    if (orders.length > 0) {
+      setEditOrderNote(orders[0].billNote || '');
+    }
+  }, [orders, editOrderNoteDialog]);
 
   // Fetch all tables
   useEffect(() => {
@@ -91,6 +102,51 @@ const Staff = () => {
       ]
     });
   };
+
+  // Hàm lưu lại log vào history của order khi đổi ghi chú
+async function addOrderLog(orderId, user, newNote) {
+  const orderRef = doc(db, "orders", orderId);
+  const snap = await getDoc(orderRef);
+  if (!snap.exists()) return;
+  const oldOrder = snap.data();
+  const oldNote = oldOrder.billNote || "";
+
+  // Thêm log vào history
+  const now = Date.now();
+  const newHistory = [
+    ...(oldOrder.history || []),
+    {
+      action: "update_bill_note",
+      user: user || "staff",
+      timestamp: now,
+      from: oldNote,
+      to: newNote,
+      note: "Cập nhật chú thích đơn hàng",
+    },
+  ];
+  await updateDoc(orderRef, {
+    billNote: newNote,
+    history: newHistory,
+  });
+}
+
+
+const handleSaveOrderNote = async () => {
+  if (!orders[0]) return;
+  setSavingNote(true);
+  try {
+    await addOrderLog(
+      orders[0].id,
+      userEmail || "staff",
+      editOrderNote
+    );
+    setEditOrderNoteDialog(false);
+  } catch (e) {
+    alert("Có lỗi khi lưu ghi chú đơn: " + e.message);
+  } finally {
+    setSavingNote(false);
+  }
+};
 
   // ---- Chuyển bàn ----
   const handleMoveTable = async () => {
@@ -348,6 +404,43 @@ const Staff = () => {
               Mã đơn: {formatOrderCode(orders[0], 0)} - Trạng thái: <strong>{orders[0].status}</strong>
             </Typography>
           )}
+          {orders.length > 0 && (
+          <Stack direction="row" alignItems="center" spacing={1} mt={0.5} mb={1.5}>
+            <Tooltip
+              title={
+                orders[0].billNote
+                  ? orders[0].billNote
+                  : "Chưa có chú thích đơn"
+              }
+              arrow
+            >
+              <Typography
+                variant="body2"
+                color ="#101010"
+  
+                sx={{
+                  fontStyle: "italic",
+                  display: "block",
+                  whiteSpace: "pre-line",
+                  maxWidth: 380,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                📝 Ghi chú đơn: {orders[0].billNote}
+              </Typography>
+            </Tooltip>
+            <Button
+              size="small"
+              variant="text"
+              fontStyle="bold"
+              onClick={() => setEditOrderNoteDialog(true)}
+              sx={{ minWidth: 0, px: 1.2, py: 0.3 }}
+            >
+              Sửa
+            </Button>
+          </Stack>
+        )}
         </Box>
       </Stack>
 
@@ -404,6 +497,37 @@ const Staff = () => {
           </Stack>
         )}
       </Box>
+      <Dialog
+  open={editOrderNoteDialog}
+  onClose={() => setEditOrderNoteDialog(false)}
+  maxWidth="sm"
+  fullWidth
+>
+      <DialogTitle>Sửa ghi chú đơn hàng</DialogTitle>
+      <DialogContent>
+        <TextField
+          fullWidth
+          value={editOrderNote}
+          onChange={(e) => setEditOrderNote(e.target.value)}
+          label="Ghi chú đơn"
+          multiline
+          minRows={2}
+          autoFocus
+          sx={{ mt: 1 }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setEditOrderNoteDialog(false)}>Hủy</Button>
+        <Button
+          variant="contained"
+          onClick={handleSaveOrderNote}
+          disabled={savingNote}
+        >
+          Lưu
+        </Button>
+      </DialogActions>
+    </Dialog>
+
 
       {/* Dialog chuyển bàn */}
       <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)}>
@@ -484,7 +608,9 @@ const Staff = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    
   );
+  
 };
 
 export default Staff;

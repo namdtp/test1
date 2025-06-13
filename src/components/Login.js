@@ -5,7 +5,7 @@ import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [staffCode, setStaffCode] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,34 +13,35 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const code = staffCode.trim().toLowerCase();
+      const fakeEmail = `${code}@1.com`;
+      const userCredential = await signInWithEmailAndPassword(auth, fakeEmail, password);
       const user = userCredential.user;
 
-      // Check active & email (nếu có users collection)
+      // Check active & info (nếu có users collection)
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
-      const userData = userDoc.data();
-      if (!userData.active) throw new Error('Tài khoản của bạn đã bị vô hiệu hóa!');
-      if (userData.email !== email) throw new Error('Email không khớp với tài khoản!');
-
-      // Điều hướng theo vai trò
-      if (userData.role === 'kitchen') {
-        navigate('/kitchen');
-      } else if (userData.role === 'staff') {
-        navigate('/staff');
-      } else if (userData.role === 'manager') {
-        navigate('/manager');
+        const userData = userDoc.data();
+        if (!userData.active) throw new Error('Tài khoản của bạn đã bị vô hiệu hóa!');
+        if (userData.staffCode !== code) throw new Error('Mã nhân viên không khớp với tài khoản!');
+        // Điều hướng theo vai trò
+        if (userData.role === 'kitchen') {
+          navigate('/kitchen');
+        } else if (userData.role === 'staff') {
+          navigate('/staff');
+        } else if (userData.role === 'manager') {
+          navigate('/manager');
+        } else {
+          navigate('/tables'); // fallback mặc định
+        }
       } else {
-        navigate('/tables'); // fallback mặc định
+        navigate('/tables');
       }
-    } else {
-      navigate('/tables');
-    }
 
       // Lưu log đăng nhập
       await addDoc(collection(db, 'logs'), {
         type: 'login',
-        email: user.email || '',
+        email: fakeEmail,
         uid: user.uid,
         timestamp: Date.now(),
       });
@@ -48,9 +49,6 @@ const Login = () => {
       // Đánh dấu đã login session/tab này (chống lặp log)
       sessionStorage.setItem('loggedIn', '1');
       localStorage.setItem('loginTime', Date.now().toString());
-
-      // Điều hướng
-     // hoặc chuyển theo vai trò user nếu cần
     } catch (err) {
       setError(err.message);
     }
@@ -61,11 +59,12 @@ const Login = () => {
       <h2>Đăng nhập</h2>
       <form onSubmit={handleLogin} style={styles.form}>
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          type="text"
+          placeholder="Mã nhân viên"
+          value={staffCode}
+          onChange={e => setStaffCode(e.target.value)}
           style={styles.input}
+          autoFocus
         />
         <input
           type="password"

@@ -21,7 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import vi from 'date-fns/locale/vi';
-// import { printBill } from './printBill';
+import { printBill } from './printBill';
 
 // MenuContext
 import { useMenu } from '../../contexts/MenuContext';
@@ -254,17 +254,83 @@ export default function OrderManagement() {
       {filteredOrders.map(order => (
         <Accordion key={order.id} sx={{ mb: 1 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>
-              🧾 {order.orderCode || order.id} | Bàn {order.tableId} | 
-              <Chip label={order.status} color={statusColor[order.status] || 'default'} size="small" sx={{ mx: 1 }} />
-              {order.items?.length || 0} món | <b>{getOrderTotal(order, menuMap).toLocaleString('vi-VN')}₫</b>
-              <Button variant="text" size="small" sx={{ ml: 2 }} onClick={e => { e.stopPropagation(); setHistoryDialog({ open: true, order }); }}>Lịch sử</Button>
-              <Typography variant="caption" sx={{ ml: 2 }}>
-                {order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN', {
-                  hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
-                }) : ''}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              flexWrap="wrap"
+              sx={{ width: "100%" }}
+            >
+              {/* Bàn & mã đơn */}
+              <Typography fontWeight={500}>
+                Bàn {order.tableId}
+                {" | "}Mã 🧾 {order.orderCode || order.id}
               </Typography>
-            </Typography>
+
+              {/* Ngày tạo */}
+              <Typography variant="caption" color="text.secondary">
+                {order.createdAt
+                  ? new Date(order.createdAt).toLocaleString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric"
+                    })
+                  : ""}
+              </Typography>
+
+          
+
+              {/* Số món & tổng tiền */}
+              <Typography>
+                {order.items?.length || 0} món |{" "}
+                <b>{getOrderTotal(order, menuMap).toLocaleString("vi-VN")}₫</b>
+              </Typography>
+
+              {/* Ghi chú đơn */}
+              {order.billNote && (
+                <Typography
+                  variant="body2"
+                  color="primary"
+                  fontStyle="italic"
+                  sx={{
+                    ml: { xs: 0, sm: 1 },
+                    mt: { xs: 0.5, sm: 0 },
+                    maxWidth: { xs: "100%", sm: 300 },
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    flexShrink: 1
+                  }}
+                  title={order.billNote}
+                >
+                  📝 {order.billNote}
+                </Typography>
+              )}
+
+              {/* Trạng thái */}
+              <Chip
+                label={order.status}
+                color={statusColor[order.status] || "default"}
+                size="small"
+                sx={{ mx: { xs: 0, sm: 1 } }}
+              />
+
+              {/* Nút lịch sử */}
+              <Button
+                variant="text"
+                size="small"
+                sx={{ ml: { xs: 0, sm: 2 } }}
+                onClick={e => {
+                  e.stopPropagation();
+                  setHistoryDialog({ open: true, order });
+                }}
+              >
+                Lịch sử
+              </Button>
+            </Stack>
+
           </AccordionSummary>
           <AccordionDetails>
             <TableContainer sx={{ mb: 2 }}>
@@ -639,6 +705,26 @@ export default function OrderManagement() {
         <DialogActions sx={{ px: isMobile ? 1 : 3, pb: isMobile ? 1 : 2 }}>
           <Button onClick={() => setBillDialog({ open: false, order: null })}>Hủy</Button>
           <Button
+            variant="outlined"
+            onClick={() => {
+              printBill(
+                billDialog.order,
+                menuMap,
+                {
+                  itemsBill: billDialog.itemsBill,
+                  discount: billDialog.discount,
+                  extraFee: billDialog.extraFee,
+                  customerName: billDialog.customerName,
+                  note: billDialog.note,
+                  showVietQR: true
+                }
+              );
+              setBillDialog({ open: false, order: null });
+            }}
+          >
+            Xem trước hóa đơn
+          </Button>
+          <Button
             variant="contained"
             color="primary"
             onClick={() =>
@@ -657,7 +743,7 @@ export default function OrderManagement() {
               )
             }
           >
-            In máy in BAR
+            In
           </Button>
         </DialogActions>
       </Dialog>

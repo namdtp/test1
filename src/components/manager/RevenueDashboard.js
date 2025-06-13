@@ -251,7 +251,7 @@ const RevenueDashboard = () => {
       </Paper>
 
       {/* Chi tiết từng đơn */}
-      {orders.map((order, idx) => {
+      {/* {orders.map((order, idx) => {
         const orderItems = (order.items || []).filter(i => i.status !== 'cancel');
         const orderRevenue = orderItems.reduce((sum, i) => {
           const price = i.price ?? menuMap[i.name]?.price ?? 0;
@@ -295,7 +295,7 @@ const RevenueDashboard = () => {
             </Table>
           </Paper>
         );
-      })}
+      })} */}
       {loading && <Typography color="info.main" textAlign="center">Đang tải dữ liệu...</Typography>}
       {(!orders.length && !loading) && (
         <Typography color="text.secondary" textAlign="center">Không có đơn nào trong khoảng thời gian này.</Typography>
