@@ -55,5 +55,5 @@ app.post('/print/image', upload.single('file'), async (req, res) => {
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`🖨️ Print server đang chạy tại http://localhost:${PORT}`);
+  console.log(`🖨️ Print server đang chạy tại http://192.168.1.200:${PORT}`);
 }); 

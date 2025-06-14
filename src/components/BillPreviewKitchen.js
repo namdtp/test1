@@ -11,8 +11,8 @@ const BillPreviewKitchen = ({ order, itemsBill, onDone, printer = 'bep' }) => {
     formData.append('file', blob, 'kitchen-bill.png');
     formData.append('printer', printer);
     try {
-    //   await fetch('http://192.168.1.200:3000/print/image', {   // <== SỬA ĐÚNG IP TẠI ĐÂY!
-        await fetch('http://localhost:3000/print/image', {
+      await fetch('http://192.168.1.200:3000/print/image', {   // <== SỬA ĐÚNG IP TẠI ĐÂY!
+        // await fetch('http://localhost:3000/print/image', {
         method: 'POST',
         body: formData,
       });
