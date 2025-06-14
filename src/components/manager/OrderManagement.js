@@ -13,6 +13,10 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+// import ReactDOM from "react-dom/client";
+import BillPreview from "./BillPreview";
+
+
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 
@@ -60,31 +64,17 @@ export default function OrderManagement() {
     itemsBill: []
   });
 
+  const [printBillData, setPrintBillData] = useState(null);
+
+
   const printToLAN = (billData, printer = 'bar') => {
-  fetch('http://192.168.1.200:3000/print', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...billData, printer })
-  })
-    .then(res => res.json())
-    .then(data => {
-      setSnack({
-        open: true,
-        msg: data.status === 'ok'
-          ? `Đã gửi lệnh in ra máy in ${printer === 'bar' ? 'BAR' : 'BẾP'}!`
-          : 'Lỗi in bill',
-        severity: data.status === 'ok' ? 'success' : 'error'
-      });
-    })
-    .catch(() =>
-      setSnack({
-        open: true,
-        msg: 'Không kết nối được máy in LAN!',
-        severity: 'error'
-      })
-    );
-  setBillDialog({ open: false, order: null });
+  setPrintBillData({
+    ...billData,
+    printer,
+    printNow: true
+  });
 };
+
 
   // Responsive
   const theme = useTheme();
@@ -727,7 +717,8 @@ export default function OrderManagement() {
           <Button
             variant="contained"
             color="primary"
-            onClick={() =>
+            onClick={() =>{
+              setBillDialog({ open: false, order: null });
               printToLAN(
                 {
                   order: billDialog.order,
@@ -741,6 +732,8 @@ export default function OrderManagement() {
                 },
                 'bar'
               )
+            }
+              
             }
           >
             In
@@ -757,6 +750,24 @@ export default function OrderManagement() {
       >
         <Alert severity={snack.severity} sx={{ width: '100%' }}>{snack.msg}</Alert>
       </Snackbar>
+      {printBillData && (
+      <BillPreview
+        order={printBillData.order}
+        menuMap={printBillData.menuMap}
+        options={{
+          ...printBillData,
+          onDone: () => {
+            setPrintBillData(null);
+            setSnack({ open: true, msg: '✅ Đã gửi ảnh hóa đơn đến máy in!', severity: 'success' });
+          },
+          onError: () => {
+            setPrintBillData(null);
+            setSnack({ open: true, msg: '❌ Lỗi khi gửi ảnh in!', severity: 'error' });
+          }
+        }}
+        style={{ display: "none" }}
+      />
+    )}
     </Box>
   );
 }

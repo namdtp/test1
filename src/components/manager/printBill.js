@@ -1,4 +1,4 @@
-// printBill.js - Chuẩn Unicode, font đẹp, tích hợp QR Techcombank
+// printBill.js -
 
 export const printBill = (
   order,
