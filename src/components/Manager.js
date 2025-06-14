@@ -1,11 +1,11 @@
 // Manager.js - Giao diện tổng thể theo MUI layout
 
 import React from 'react';
-import { AppBar, Box, Toolbar, Typography, Button, Container, Grid, Paper } from '@mui/material';
+import { AppBar, Box, Toolbar, Typography, Button, Container, Paper } from '@mui/material';
 import OrderManagement from './manager/OrderManagement';
-import MenuManagement from './manager/MenuManagement';
+// import MenuManagement from './manager/MenuManagement';
 import TableManagement from './manager/TableManagement';
-import RevenueDashboard from './manager/RevenueDashboard';
+// import RevenueDashboard from './manager/RevenueDashboard';
 import UserManagement from './manager/UserManagement'
 import Logs from './manager/Logs';
 
@@ -15,9 +15,9 @@ const Manager = () => {
 
   const renderContent = () => {
     switch (currentTab) {
-      case 'menu': return <MenuManagement />;
+      // case 'menu': return <MenuManagement />;
       case 'orders': return <OrderManagement />;
-      case 'revenue': return <RevenueDashboard />;
+      // case 'revenue': return <RevenueDashboard />;
       case 'users': return <UserManagement />;
       case 'logs': return <Logs />;
       default: return <TableManagement />;
@@ -34,9 +34,9 @@ const Manager = () => {
           <Button color="inherit" onClick={() => setCurrentTab('orders')}>Đơn hàng</Button>
           <Button color="inherit" onClick={() => setCurrentTab('logs')}>Logs</Button>
           <Button color="inherit" onClick={() => setCurrentTab('tables')}>Bàn</Button>
-          <Button color="inherit" onClick={() => setCurrentTab('menu')}>Thực đơn</Button>
+          {/* <Button color="inherit" onClick={() => setCurrentTab('menu')}>Thực đơn</Button> */}
           <Button color="inherit" onClick={() => setCurrentTab('users')}>Nhân viên</Button>
-          <Button color="inherit" onClick={() => setCurrentTab('revenue')}>Thống kê</Button>
+          {/* <Button color="inherit" onClick={() => setCurrentTab('revenue')}>Thống kê</Button> */}
         </Toolbar>
       </AppBar>
 

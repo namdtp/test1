@@ -48,7 +48,6 @@ const Logs = () => {
             user: h.user || '',
             note: h.note || '',
             orderId,
-             orderId,
              orderCode: order.orderCode,
             tableId: order.tableId,
             timestamp: h.timestamp,

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import {
-  Typography, Grid, Paper, Button, Chip, Box, Divider
+  Typography, Grid, Paper, Button, Box, Divider
 } from '@mui/material';
 
 import './Tables.css';
@@ -80,9 +80,9 @@ const Tables = () => {
     };
   };
 
-  const getStatusColor = (status) => {
-    return status === 'available' ? 'default' : 'primary';
-  };
+  // const getStatusColor = (status) => {
+  //   return status === 'available' ? 'default' : 'primary';
+  // };
 
   const groupedByRow = tables.reduce((acc, table) => {
     const row = (table.row || 'Khác').toUpperCase();

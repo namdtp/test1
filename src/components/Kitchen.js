@@ -24,7 +24,7 @@ const Kitchen = () => {
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [tableFilter, setTableFilter] = useState('all');
+  // const [tableFilter, setTableFilter] = useState('all');
   const [sortTime, setSortTime] = useState('desc');
   const [groupType, setGroupType] = useState('table');
 
@@ -130,7 +130,7 @@ const Kitchen = () => {
         && !(!menuMap[item.name] && categoryFilter === 'custom')
       ) return false;
     }
-    if (tableFilter !== 'all' && item.tableId !== tableFilter) return false;
+    // if (tableFilter !== 'all' && item.tableId !== tableFilter) return false;
     return true;
   });
 
@@ -147,7 +147,7 @@ const Kitchen = () => {
     return acc;
   }, {});
 
-  const tableIds = Array.from(new Set(allItems.map(item => item.tableId)));
+  // const tableIds = Array.from(new Set(allItems.map(item => item.tableId)));
   const allCategories = [
     ...new Set(menuList.map(m => (m.category || '').trim()).filter(Boolean))
   ];
