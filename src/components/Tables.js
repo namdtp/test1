@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
@@ -7,6 +7,16 @@ import {
 } from '@mui/material';
 
 import './Tables.css';
+
+const getOrderTotal = (order, menuMap) => {
+  return (order.items || [])
+    .filter(item => item.status !== 'cancel')
+    .reduce((sum, item) => {
+      // Ưu tiên item.price (giá đã fix khi thêm món), fallback sang menuMap, cuối cùng là 0
+      const price = item.price ?? menuMap[item.name]?.price ?? 0;
+      return sum + (item.quantity || 0) * price;
+    }, 0);
+};
 
 const Tables = () => {
   const [tables, setTables] = useState([]);
@@ -58,21 +68,13 @@ const Tables = () => {
     navigate(`/staff?tableId=${tableId}`);
   };
 
-  const calculateTotal = (items) => {
-    return (items || [])
-      .filter(item => item.status !== 'cancel')
-      .reduce((total, item) => {
-        const price = menuMap[item.name]?.price || 0;
-        return total + price * (item.quantity || 0);
-      }, 0);
-  };
-
+  // Tính thông tin đơn hàng đang pending của bàn
   const getOrderInfo = (tableId) => {
     const order = orders.find(o => o.tableId === tableId && o.status === 'pending');
     if (!order) return null;
 
-    const itemCount = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const total = calculateTotal(order.items);
+    const itemCount = (order.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const total = getOrderTotal(order, menuMap);
     return {
       createdAt: order.createdAt,
       itemCount,
@@ -80,22 +82,21 @@ const Tables = () => {
     };
   };
 
-  // const getStatusColor = (status) => {
-  //   return status === 'available' ? 'default' : 'primary';
-  // };
+  // Gom bàn theo hàng (row)
+  const groupedByRow = useMemo(() => (
+    tables.reduce((acc, table) => {
+      const row = (table.row || 'Khác').toUpperCase();
+      if (!acc[row]) acc[row] = [];
+      acc[row].push(table);
+      return acc;
+    }, {})
+  ), [tables]);
 
-  const groupedByRow = tables.reduce((acc, table) => {
-    const row = (table.row || 'Khác').toUpperCase();
-    if (!acc[row]) acc[row] = [];
-    acc[row].push(table);
-    return acc;
-  }, {});
-
-  const sortedRowKeys = Object.keys(groupedByRow).sort();
+  const sortedRowKeys = useMemo(() => Object.keys(groupedByRow).sort(), [groupedByRow]);
 
   return (
     <Box sx={{ p: 2, maxWidth: '1200px', mx: 'auto' }}>
-      <Box className="tables-header">
+      <Box className="tables-header" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Typography variant="h5" fontWeight="bold">Chọn bàn</Typography>
         {userRole === 'manager' && (
           <Button
@@ -129,34 +130,46 @@ const Tables = () => {
                       className={`table-card ${isOccupied ? 'occupied' : 'available'}`}
                       onClick={() => handleSelectTable(table.id)}
                       elevation={1}
+                      sx={{
+                        cursor: 'pointer',
+                        p: 2,
+                        minHeight: 140,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        border: isOccupied ? '2px solid #ff9800' : '2px solid #bdbdbd',
+                        boxShadow: isOccupied ? 3 : 1,
+                        transition: 'box-shadow 0.2s'
+                      }}
                     >
-                      <Typography className="table-name">{table.name || table.id}</Typography>
+                      <Typography className="table-name" fontWeight={700} fontSize={22} gutterBottom>
+                        {table.name || table.id}
+                      </Typography>
                       {isOccupied && info ? (
                         <>
-                          <Typography className="table-time">
-                            Thời gian: {new Date(info.createdAt).toLocaleString('vi-VN', {
+                          <Typography className="table-time" fontSize={13} color="text.secondary">
+                            Thời gian: {info.createdAt ? new Date(info.createdAt).toLocaleString('vi-VN', {
                               hour: '2-digit',
                               minute: '2-digit',
                               day: '2-digit',
                               month: '2-digit',
                               year: 'numeric'
-                            })}
+                            }) : ''}
                           </Typography>
-                          <div className="table-divider" />
-                          <Typography className="table-label">
+                          <div className="table-divider" style={{ margin: '6px 0' }} />
+                          <Typography className="table-label" fontSize={16}>
                             Số món: <strong>{info.itemCount}</strong>
                           </Typography>
-                          <Typography className="table-label">
-                            Tổng tiền: <strong>{info.total.toLocaleString('vi-VN')} đ</strong>
+                          <Typography className="table-label" fontSize={16}>
+                            Tổng tiền: <strong>{info.total.toLocaleString('vi-VN')}₫</strong>
                           </Typography>
                         </>
                       ) : (
-                        <Typography className="table-text" color="text.secondary">
+                        <Typography className="table-text" color="text.secondary" fontSize={16}>
                           Trống
                         </Typography>
                       )}
                     </Paper>
-
                   </Grid>
                 );
               })}

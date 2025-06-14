@@ -61,7 +61,7 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
       formData.append('file', blob, 'bill.png');
       formData.append('printer', printer);
 
-      await fetch('http://localhost:3000/print/image', {
+      await fetch('http://192.168.1.200:3000/print/image', {
         method: 'POST',
         body: formData
       });

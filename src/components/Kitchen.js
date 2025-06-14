@@ -8,10 +8,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import './Staff.css';
 import { useMenu } from '../contexts/MenuContext';
-
-// const KITCHEN_PRINTER_API = 'http://192.168.1.200:3000/print';
-
-const KITCHEN_PRINTER_API = 'http://localhost:3000/print';
+import BillPreviewKitchen from './BillPreviewKitchen'; // IMPORT COMPONENT IN BẾP
 
 const Kitchen = () => {
   const menuList = useMenu();
@@ -24,9 +21,9 @@ const Kitchen = () => {
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  // const [tableFilter, setTableFilter] = useState('all');
   const [sortTime, setSortTime] = useState('desc');
   const [groupType, setGroupType] = useState('table');
+  const [printBillData, setPrintBillData] = useState(null); // STATE BILL IN BẾP
 
   // Chỉ mark đã in, không in lại các món cũ khi reload
   const printedItemsRef = useRef([]);
@@ -88,9 +85,10 @@ const Kitchen = () => {
     }
   }, [allItems]);
 
-  // Khi có món mới (pending, chưa in), thì in
+  // Khi có món mới (pending, chưa in), thì in bằng BillPreviewKitchen
   useEffect(() => {
-    if (!initializedRef.current) return; // Đảm bảo đã mark cũ xong
+    if (!initializedRef.current) return;
+    // Lọc các món mới chưa in
     const newItems = allItems.filter(
       item =>
         item.status === 'pending' &&
@@ -98,26 +96,40 @@ const Kitchen = () => {
           pi => pi.orderId === item.orderId && pi.itemIndex === item.itemIndex
         )
     );
-    if (newItems.length > 0) {
-      // Group theo order để in mỗi bàn một bill
+    if (newItems.length > 0 && !printBillData) {
+      // Group các món mới theo order (mỗi bàn 1 bill riêng)
       const grouped = {};
       newItems.forEach(item => {
         if (!grouped[item.orderId]) grouped[item.orderId] = [];
         grouped[item.orderId].push(item);
       });
-      Object.entries(grouped).forEach(([orderId, items]) => {
+      // In lần lượt từng bill (nếu có nhiều bàn cùng gọi)
+      const orderIds = Object.keys(grouped);
+      if (orderIds.length > 0) {
+        const orderId = orderIds[0]; // lấy từng order/bill một
         const order = orders.find(o => o.id === orderId);
         if (order) {
-          printToKitchen(order, menuMap, items);
+          setPrintBillData({ order, itemsBill: grouped[orderId] });
         }
-      });
-      // Đánh dấu các item vừa in, tránh in lặp
+      }
+      // Note: các món sẽ được đánh dấu đã in khi printBillData in xong
+    }
+    // eslint-disable-next-line
+  }, [allItems, menuMap, orders, printBillData]);
+
+  // Khi in xong, đánh dấu các món đã in (chỉ khi BillPreviewKitchen gọi xong)
+  const handlePrintDone = () => {
+    if (printBillData && printBillData.itemsBill) {
       printedItemsRef.current = [
         ...printedItemsRef.current,
-        ...newItems.map(i => ({ orderId: i.orderId, itemIndex: i.itemIndex }))
+        ...printBillData.itemsBill.map(i => ({
+          orderId: printBillData.order.id,
+          itemIndex: i.itemIndex
+        }))
       ];
     }
-  }, [allItems, menuMap, orders]);
+    setPrintBillData(null);
+  };
 
   // FILTER + SORT
   let filteredItems = allItems.filter(item => {
@@ -130,7 +142,6 @@ const Kitchen = () => {
         && !(!menuMap[item.name] && categoryFilter === 'custom')
       ) return false;
     }
-    // if (tableFilter !== 'all' && item.tableId !== tableFilter) return false;
     return true;
   });
 
@@ -147,24 +158,9 @@ const Kitchen = () => {
     return acc;
   }, {});
 
-  // const tableIds = Array.from(new Set(allItems.map(item => item.tableId)));
   const allCategories = [
     ...new Set(menuList.map(m => (m.category || '').trim()).filter(Boolean))
   ];
-
-  // Hàm gọi in ra bếp
-  const printToKitchen = (order, menuMap, items) => {
-    fetch(KITCHEN_PRINTER_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        order,
-        menuMap,
-        itemsBill: items,
-        printer: 'bep'
-      })
-    }).catch(() => { });
-  };
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: '1000px', mx: 'auto' }}>
@@ -359,6 +355,16 @@ const Kitchen = () => {
             </tbody>
           </table>
         </Box>
+      )}
+
+      {/* BillPreviewKitchen chỉ render khi cần in món mới */}
+      {printBillData && (
+        <BillPreviewKitchen
+          order={printBillData.order}
+          itemsBill={printBillData.itemsBill}
+          onDone={handlePrintDone}
+          printer="bep"
+        />
       )}
     </Box>
   );
