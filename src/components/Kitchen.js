@@ -253,8 +253,8 @@ const Kitchen = () => {
                 }}>
                   <thead>
                     <tr>
-                      <th style={{ width: '34%' }}>MÓN</th>
-                      <th style={{ width: '12%' }}>SL</th>
+                      <th style={{ width: '38%' }}>MÓN</th>
+                      <th style={{ width: '8%' }}>SL</th>
                       <th style={{ width: '28%' }}>TRẠNG</th>
                       <th style={{ width: '26%' }}>Thời gian</th>
                     </tr>
@@ -558,7 +558,8 @@ const Kitchen = () => {
       )}
 
       {printBillData && (
-        <div style={{ visibility: 'hidden', position: 'absolute', left: -9999, top: 0 }}>
+        // Để hiện ra thật sự (có thể cho nhỏ lại, hoặc fixed ở góc dưới màn hình)
+        <div style={{ position: 'fixed', right: 10, bottom: 10, zIndex: 9999, background: '#fff', border: '1px solid #eee' }}>
           <BillPreviewKitchen
             order={printBillData.order}
             itemsBill={printBillData.itemsBill}
@@ -567,6 +568,7 @@ const Kitchen = () => {
           />
         </div>
       )}
+
     </Box>
   );
 };

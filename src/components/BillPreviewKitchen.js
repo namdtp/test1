@@ -65,10 +65,10 @@ const BillPreviewKitchen = ({ order, itemsBill, onDone, printer = 'bep' }) => {
     <div
       ref={ref}
       style={{
-        width: 260,
+        width: 286,
         minHeight: 50,
-        margin: '8px auto',
-        padding: 8,
+        margin: '0px auto',
+        padding: 0,
         fontFamily: 'monospace, Roboto, Arial',
         background: '#fff',
         color: '#000',

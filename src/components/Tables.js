@@ -78,7 +78,8 @@ const Tables = () => {
     return {
       createdAt: order.createdAt,
       itemCount,
-      total
+      total,
+      billNote: order.billNote || '',  // <== Bổ sung ghi chú
     };
   };
 
@@ -163,6 +164,25 @@ const Tables = () => {
                           <Typography className="table-label" fontSize={16}>
                             Tổng tiền: <strong>{info.total.toLocaleString('vi-VN')}₫</strong>
                           </Typography>
+                          {/* GHI CHÚ ĐƠN HIỆN Ở ĐÂY */}
+                          {info.billNote && (
+                            <Typography
+                              className="table-note"
+                              fontSize={15}
+                              color="#d2691e"
+                              fontStyle="italic"
+                              sx={{
+                                mt: 0.5,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: 210
+                              }}
+                              title={info.billNote}
+                            >
+                              📝 {info.billNote}
+                            </Typography>
+                          )}
                         </>
                       ) : (
                         <Typography className="table-text" color="text.secondary" fontSize={16}>

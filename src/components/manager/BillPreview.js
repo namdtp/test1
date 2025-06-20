@@ -61,6 +61,11 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
         body: formData
       });
 
+      // await fetch('http://localhost:3000/print/image', {
+      //   method: 'POST',
+      //   body: formData
+      // });
+
       onDone();
     } catch (err) {
       console.error('❌ Lỗi khi gửi ảnh in:', err);

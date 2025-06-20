@@ -43,6 +43,20 @@ function getOrderTotal(order, menuMap) {
     .reduce((sum, item) => sum + (item.quantity * (menuMap[item.name]?.price || item.price || 0)), 0);
 }
 
+function mergeSameDishes(items) {
+  const merged = [];
+  items.forEach(item => {
+    const key = `${item.name}-${item.price}`;
+    const idx = merged.findIndex(i => i.name === item.name && i.price === item.price);
+    if (idx > -1) {
+      merged[idx].quantity += item.quantity;
+    } else {
+      merged.push({ ...item });
+    }
+  });
+  return merged;
+}
+
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
   const [tableFilter, setTableFilter] = useState('all');
@@ -478,12 +492,16 @@ export default function OrderManagement() {
                     discount: order.discount || 0,
                     note: order.billNote || '',
                     extraFee: order.extraFee || 0,
-                    itemsBill: Array.isArray(order.items)
-                      ? order.items.filter(i => i.status !== 'cancel').map(i => ({
-                          ...i,
-                          price: menuMap[i.name]?.price ?? i.price ?? 0
-                        }))
-                      : []
+                    // GỘP MÓN TỰ ĐỘNG ở đây
+                    itemsBill: mergeSameDishes(
+                      Array.isArray(order.items)
+                        ? order.items.filter(i => i.status !== 'cancel').map(i => ({
+                            ...i,
+                            price: menuMap[i.name]?.price ?? i.price ?? 0
+                          }))
+                        : []
+                    ),
+                    customerPaid: 0 // Thêm trường này để nhập tiền khách đưa
                   })
                 }
               >
@@ -579,167 +597,183 @@ export default function OrderManagement() {
 
       {/* Dialog chỉnh bill trước khi in */}
       <Dialog
-        open={billDialog.open}
-        onClose={() => setBillDialog({ open: false, order: null })}
-        maxWidth="sm"
-        fullWidth
-        fullScreen={isMobile}
-      >
-        <DialogTitle>Chỉnh sửa hóa đơn trước khi in</DialogTitle>
-        <DialogContent sx={{ p: isMobile ? 1 : 3 }}>
-          <Stack spacing={2}>
-            <TextField
-              label="Tên khách hàng"
-              value={billDialog.customerName}
-              onChange={e => setBillDialog(d => ({ ...d, customerName: e.target.value }))}
-              fullWidth
-            />
-            <TextField
-              label="Ghi chú hóa đơn"
-              value={billDialog.note}
-              onChange={e => setBillDialog(d => ({ ...d, note: e.target.value }))}
-              fullWidth
-              multiline
-              minRows={2}
-            />
-            <TextField
-              label="Giảm giá (₫)"
-              type="number"
-              value={billDialog.discount}
-              onChange={e => setBillDialog(d => ({ ...d, discount: parseInt(e.target.value) || 0 }))}
-              fullWidth
-              inputProps={{ min: 0 }}
-            />
-            <TextField
-              label="Phụ thu (₫)"
-              type="number"
-              value={billDialog.extraFee}
-              onChange={e => setBillDialog(d => ({ ...d, extraFee: parseInt(e.target.value) || 0 }))}
-              fullWidth
-              inputProps={{ min: 0 }}
-            />
-            <TableContainer sx={{ maxHeight: 280, overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: isMobile ? 600 : 400 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell width={1000} >Tên món</TableCell>
-                    <TableCell width={300}>SL</TableCell>
-                    <TableCell width={600}>Đơn giá</TableCell>
-                    <TableCell>Thành tiền</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(billDialog.itemsBill || []).map((item, idx)  => (
-                    <TableRow key={idx}>
-                      <TableCell>
-                        <TextField
-                          value={item.name}
-                          onChange={e => setBillDialog(b => ({
-                            ...b,
-                            itemsBill: b.itemsBill.map((it, i) =>
-                              i === idx ? { ...it, name: e.target.value } : it
-                            )
-                          }))}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={item.quantity}
-                          inputProps={{ min: 1 }}
-                          onChange={e => setBillDialog(b => ({
-                            ...b,
-                            itemsBill: b.itemsBill.map((it, i) =>
-                              i === idx ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
-                            )
-                          }))}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={item.price}
-                          inputProps={{ min: 0 }}
-                          onChange={e => setBillDialog(b => ({
-                            ...b,
-                            itemsBill: b.itemsBill.map((it, i) =>
-                              i === idx ? { ...it, price: Math.max(0, parseInt(e.target.value) || 0) } : it
-                            )
-                          }))}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {(item.price * item.quantity).toLocaleString('vi-VN')}₫
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          color="error"
-                          size="small"
-                          onClick={() => setBillDialog(b => ({
-                            ...b,
-                            itemsBill: b.itemsBill.filter((_, i) => i !== idx)
-                          }))}
-                        >Xóa</Button>
-                      </TableCell>
+          open={billDialog.open}
+          onClose={() => setBillDialog({ open: false, order: null })}
+          maxWidth="sm"
+          fullWidth
+          fullScreen={isMobile}
+        >
+          <DialogTitle>Chỉnh sửa hóa đơn trước khi in</DialogTitle>
+          <DialogContent sx={{ p: isMobile ? 1 : 3 }}>
+            <Stack spacing={2}>
+              <TextField
+                label="Tên khách hàng"
+                value={billDialog.customerName}
+                onChange={e => setBillDialog(d => ({ ...d, customerName: e.target.value }))}
+                fullWidth
+              />
+              <TextField
+                label="Ghi chú hóa đơn"
+                value={billDialog.note}
+                onChange={e => setBillDialog(d => ({ ...d, note: e.target.value }))}
+                fullWidth
+                multiline
+                minRows={2}
+              />
+              <TextField
+                label="Giảm giá (₫)"
+                type="number"
+                value={billDialog.discount}
+                onChange={e => setBillDialog(d => ({
+                  ...d,
+                  discount: parseInt(e.target.value) || 0
+                }))}
+                fullWidth
+                inputProps={{ min: 0 }}
+              />
+              <TextField
+                label="Phụ thu (₫)"
+                type="number"
+                value={billDialog.extraFee}
+                onChange={e => setBillDialog(d => ({
+                  ...d,
+                  extraFee: parseInt(e.target.value) || 0
+                }))}
+                fullWidth
+                inputProps={{ min: 0 }}
+              />
+              <TableContainer sx={{ maxHeight: 280, overflowX: 'auto' }}>
+                <Table size="small" sx={{ minWidth: isMobile ? 600 : 400 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width={1000}>Tên món</TableCell>
+                      <TableCell width={300}>SL</TableCell>
+                      <TableCell width={600}>Đơn giá</TableCell>
+                      <TableCell>Thành tiền</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: isMobile ? 1 : 3, pb: isMobile ? 1 : 2 }}>
-          <Button onClick={() => setBillDialog({ open: false, order: null })}>Hủy</Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              printBill(
-                billDialog.order,
-                menuMap,
-                {
-                  itemsBill: billDialog.itemsBill,
-                  discount: billDialog.discount,
-                  extraFee: billDialog.extraFee,
-                  customerName: billDialog.customerName,
-                  note: billDialog.note,
-                  showVietQR: true
-                }
-              );
-              setBillDialog({ open: false, order: null });
-            }}
-          >
-            Xem trước hóa đơn
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() =>{
-              setBillDialog({ open: false, order: null });
-              printToLAN(
-                {
-                  order: billDialog.order,
-                  menuMap: menuMap,
-                  itemsBill: billDialog.itemsBill,
-                  discount: billDialog.discount,
-                  extraFee: billDialog.extraFee,
-                  customerName: billDialog.customerName,
-                  note: billDialog.note,
-                  showVietQR: true
-                },
-                'bar'
-              )
-            }
-              
-            }
-          >
-            In
-          </Button>
-        </DialogActions>
-      </Dialog>
+                  </TableHead>
+                  <TableBody>
+                    {(billDialog.itemsBill || []).map((item, idx)  => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <TextField
+                            value={item.name}
+                            onChange={e => setBillDialog(b => ({
+                              ...b,
+                              itemsBill: b.itemsBill.map((it, i) =>
+                                i === idx ? { ...it, name: e.target.value } : it
+                              )
+                            }))}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={item.quantity}
+                            inputProps={{ min: 1 }}
+                            onChange={e => setBillDialog(b => ({
+                              ...b,
+                              itemsBill: b.itemsBill.map((it, i) =>
+                                i === idx ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
+                              )
+                            }))}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={item.price}
+                            inputProps={{ min: 0 }}
+                            onChange={e => setBillDialog(b => ({
+                              ...b,
+                              itemsBill: b.itemsBill.map((it, i) =>
+                                i === idx ? { ...it, price: Math.max(0, parseInt(e.target.value) || 0) } : it
+                              )
+                            }))}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {(item.price * item.quantity).toLocaleString('vi-VN')}₫
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            color="error"
+                            size="small"
+                            onClick={() => setBillDialog(b => ({
+                              ...b,
+                              itemsBill: b.itemsBill.filter((_, i) => i !== idx)
+                            }))}
+                          >Xóa</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* --- Tổng tiền, Tiền khách đưa, Tiền thối lại --- */}
+              {(() => {
+                const subtotal = (billDialog.itemsBill || []).reduce(
+                  (sum, item) => sum + item.quantity * item.price,
+                  0
+                );
+                const totalBill = subtotal - (billDialog.discount || 0) + (billDialog.extraFee || 0);
+                const changeDue = (billDialog.customerPaid || 0) - totalBill;
+                return (
+                  <>
+                    <Typography fontWeight="bold" sx={{ mt: 2 }}>
+                      Tổng cộng: {totalBill.toLocaleString('vi-VN')}₫
+                    </Typography>
+                    <TextField
+                      label="Tiền khách đưa (₫)"
+                      type="number"
+                      value={billDialog.customerPaid || ''}
+                      onChange={e => setBillDialog(d => ({
+                        ...d,
+                        customerPaid: parseInt(e.target.value) || 0
+                      }))}
+                      fullWidth
+                      inputProps={{ min: 0 }}
+                      sx={{ mt: 1 }}
+                    />
+                    <Typography fontWeight="bold" color={changeDue < 0 ? 'error' : 'success.main'}>
+                      Tiền thối lại: {changeDue.toLocaleString('vi-VN')}₫
+                    </Typography>
+                  </>
+                );
+              })()}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: isMobile ? 1 : 3, pb: isMobile ? 1 : 2 }}>
+            <Button onClick={() => setBillDialog({ open: false, order: null })}>Hủy</Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() =>
+                printToLAN(
+                  {
+                    order: billDialog.order,
+                    menuMap: menuMap,
+                    itemsBill: billDialog.itemsBill,
+                    discount: billDialog.discount,
+                    extraFee: billDialog.extraFee,
+                    customerName: billDialog.customerName,
+                    note: billDialog.note,
+                    showVietQR: true
+                  },
+                  'bar'
+                )
+              }
+            >
+              In máy in BAR
+            </Button>
+          </DialogActions>
+        </Dialog>
+
 
       {/* Snackbar */}
       <Snackbar
