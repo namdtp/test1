@@ -25,16 +25,13 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
   }, 0);
   const total = subtotal - discount + extraFee;
 
-  // ----- QR qua proxy weserv (chống CORS tuyệt đối) -----
+  // QR VietQR
   const bankBin = '970403';
   const account = 'TNG50523114517';
   const addInfo = encodeURIComponent(order.orderCode || order.id);
   const vietqrUrl = "https://images.weserv.nl/?url=" + encodeURIComponent(
     `img.vietqr.io/image/${bankBin}-${account}-print.png?amount=${total}&addInfo=${addInfo}`
   );
-
-  // ----- Nếu muốn test PNG public (comment QR thật, bỏ comment dòng dưới) -----
-  // const vietqrUrl = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png";
 
   const waitImageLoad = () => {
     return new Promise(resolve => {
@@ -53,8 +50,6 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
   const sendToPrint = async () => {
     try {
       await waitImageLoad();
-      console.log("QR image loaded:", qrRef.current?.src, qrRef.current?.complete);
-
       const canvas = await html2canvas(billRef.current, { scale: 2, useCORS: true });
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const formData = new FormData();
@@ -81,28 +76,114 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
   }, [printNow]);
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 0, background: '#eee', margin: 0 }}>
       <div ref={billRef} style={{
-        width: 300,
-        padding: 12,
-        backgroundColor: '#fff',
-        fontFamily: 'Roboto, sans-serif',
+        width: 286,
+        margin: '0 auto',
+        background: '#fff',
+        fontFamily: 'Roboto, Arial, sans-serif',
         color: '#000',
-        fontSize: 12
+        fontSize: 11,
+        padding: 0,
+        border: '1px solid #eee',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}>
-        <h3 style={{ textAlign: 'center', margin: '4px 0' }}>HÓA ĐƠN THANH TOÁN</h3>
-        <p><b>Bàn:</b> {order.tableId}</p>
-        <p><b>Mã đơn:</b> {order.orderCode || order.id}</p>
-        <p><b>Thời gian:</b> {new Date(order.createdAt).toLocaleString('vi-VN')}</p>
-        {customerName && <p><b>Khách:</b> {customerName}</p>}
+        {/* HEADER */}
+        <div style={{
+          textAlign: 'center',
+          fontWeight: 700,
+          fontSize: 15,
+          margin: 0,
+          padding: 0
+        }}>
+          HÓA ĐƠN THANH TOÁN
+        </div>
+        {/* Dòng 2: Mã HD trái, Bàn phải */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 12,
+          fontWeight: 600,
+          margin: 0,
+          padding: 0
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            Mã HD: <span>{order.orderCode || order.id}</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            Bàn: <span>{order.tableId}</span>
+          </div>
+        </div>
+        {/* Dòng 3: Thời gian trái, Khách phải */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 11,
+          fontWeight: 400,
+          margin: 0,
+          padding: 0
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            Thời gian: <span>{new Date(order.createdAt).toLocaleString('vi-VN')}</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            {customerName && <>Khách: <span>{customerName}</span></>}
+          </div>
+        </div>
+        {/* Gạch chân phân cách */}
+        <div style={{
+          borderBottom: '2px solid #222',
+          margin: '2px 0 0 0',
+          height: 0,
+          width: '100%'
+        }} />
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+        {/* DANH SÁCH MÓN */}
+        <table style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          margin: 0,
+          fontSize: 11,
+          border: '1px solid #111'
+        }}>
           <thead>
             <tr>
-              <th>Món</th>
-              <th style={{ textAlign: 'center' }}>SL</th>
-              <th style={{ textAlign: 'right' }}>Đơn giá</th>
-              <th style={{ textAlign: 'right' }}>Thành tiền</th>
+              <th style={{
+                textAlign: 'left',
+                fontWeight: 700,
+                fontSize: 11,
+                padding: '2px 0 2px 3px', // cách trái 3px
+                border: '1px solid #111',
+                background: '#f7f7f7'
+              }}>Món</th>
+              <th style={{
+                textAlign: 'left',
+                width: 30,
+                fontWeight: 700,
+                fontSize: 11,
+                padding: '2px 0 2px 3px',
+                border: '1px solid #111',
+                background: '#f7f7f7'
+              }}>SL</th>
+              <th style={{
+                textAlign: 'left',
+                width: 65,
+                fontWeight: 700,
+                fontSize: 11,
+                padding: '2px 0 2px 3px',
+                border: '1px solid #111',
+                background: '#f7f7f7'
+              }}>Giá</th>
+              <th style={{
+                textAlign: 'left',
+                width: 70,
+                fontWeight: 700,
+                fontSize: 11,
+                padding: '2px 0 2px 3px',
+                border: '1px solid #111',
+                background: '#f7f7f7'
+              }}>T.Tiền</th>
             </tr>
           </thead>
           <tbody>
@@ -110,57 +191,95 @@ export default function BillPreview({ order, menuMap = {}, options = {} }) {
               const price = menuMap[item.name]?.price ?? item.price ?? 0;
               return (
                 <tr key={idx}>
-                  <td>{item.name}</td>
-                  <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                  <td style={{ textAlign: 'right' }}>{price.toLocaleString('vi-VN')}₫</td>
-                  <td style={{ textAlign: 'right' }}>{(item.quantity * price).toLocaleString('vi-VN')}₫</td>
+                  <td style={{
+                    textAlign: 'left',
+                    padding: '2px 0 2px 3px',
+                    wordBreak: 'break-all',
+                    border: '1px solid #111'
+                  }}>{item.name}</td>
+                  <td style={{
+                    textAlign: 'left',
+                    padding: '2px 0 2px 3px',
+                    border: '1px solid #111'
+                  }}>{item.quantity}</td>
+                  <td style={{
+                    textAlign: 'left',
+                    padding: '2px 0 2px 3px',
+                    border: '1px solid #111'
+                  }}>{price.toLocaleString('vi-VN')}</td>
+                  <td style={{
+                    textAlign: 'left',
+                    padding: '2px 0 2px 3px',
+                    border: '1px solid #111'
+                  }}>{(item.quantity * price).toLocaleString('vi-VN')}</td>
                 </tr>
-              );
+              )
             })}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={3}>Tạm tính</td>
-              <td style={{ textAlign: 'right' }}>{subtotal.toLocaleString('vi-VN')}₫</td>
-            </tr>
-            {discount > 0 && (
-              <tr>
-                <td colSpan={3}>Giảm giá</td>
-                <td style={{ textAlign: 'right' }}>- {discount.toLocaleString('vi-VN')}₫</td>
-              </tr>
-            )}
-            {extraFee > 0 && (
-              <tr>
-                <td colSpan={3}>Phụ thu</td>
-                <td style={{ textAlign: 'right' }}>+ {extraFee.toLocaleString('vi-VN')}₫</td>
-              </tr>
-            )}
-            <tr style={{ fontWeight: 'bold', borderTop: '1px solid #000' }}>
-              <td colSpan={3}>TỔNG CỘNG</td>
-              <td style={{ textAlign: 'right' }}>{total.toLocaleString('vi-VN')}₫</td>
-            </tr>
-          </tfoot>
         </table>
 
-        {note && <p><b>Ghi chú:</b> {note}</p>}
+        {/* TỔNG KẾT */}
+        <table style={{ width: '100%', margin: 0, fontSize: 11 }}>
+          <tbody>
+            <tr>
+              <td colSpan={3} style={{ textAlign: 'left', fontWeight: 400 }}>Tạm tính</td>
+              <td style={{ textAlign: 'right', fontWeight: 400 }}>{subtotal.toLocaleString('vi-VN')}</td>
+            </tr>
+            {discount > 0 &&
+              <tr>
+                <td colSpan={3} style={{ textAlign: 'left' }}>Giảm giá</td>
+                <td style={{ textAlign: 'right', color: 'red' }}>- {discount.toLocaleString('vi-VN')}</td>
+              </tr>
+            }
+            {extraFee > 0 &&
+              <tr>
+                <td colSpan={3} style={{ textAlign: 'left' }}>Phụ thu</td>
+                <td style={{ textAlign: 'right', color: '#1976d2' }}>+ {extraFee.toLocaleString('vi-VN')}</td>
+              </tr>
+            }
+            <tr>
+              <td colSpan={3} style={{
+                borderTop: '2px solid #222', fontWeight: 700, fontSize: 12, textAlign: 'left', paddingTop: 2
+              }}>TỔNG CỘNG</td>
+              <td style={{
+                borderTop: '2px solid #222', fontWeight: 700, fontSize: 12, textAlign: 'right', paddingTop: 2
+              }}>{total.toLocaleString('vi-VN')}</td>
+            </tr>
+          </tbody>
+        </table>
 
+        {/* GHI CHÚ */}
+        {note &&
+          <div style={{ margin: '2px 0 0 0', fontSize: 10, textAlign: 'center' }}>
+            <b>Ghi chú:</b> {note}
+          </div>
+        }
+
+        {/* QR THANH TOÁN */}
         {showVietQR && (
-          <div style={{ textAlign: 'center', margin: '12px 0' }}>
-            <b>Chuyển khoản VietQR:</b><br />
+          <div style={{ textAlign: 'center', margin: '0 0 0 0' }}>
+  
             <img
               ref={qrRef}
               src={vietqrUrl}
               alt="vietqr"
-              style={{ width: 220, margin: '8px auto' }}
+              style={{ width: 200, margin: '2px auto 0', border: '1px solid #eee', display: 'block' }}
               crossOrigin="anonymous"
             />
-            <div style={{ fontSize: 11 }}>
-              Nội dung: <b>{decodeURIComponent(addInfo)}</b><br />
-              STK: <b>{account}</b> (Techcombank)
+            <div style={{ fontSize: 12, margin: 0 }}>
+              <span><b> Nội dung: {decodeURIComponent(addInfo)}</b></span><br />
+              <span><b>STK: {account} (Sacombank)</b></span>
             </div>
           </div>
         )}
-        <p style={{ textAlign: 'center', marginTop: 8 }}>Cảm ơn quý khách!</p>
+
+        {/* CHÂN TRANG */}
+        <div style={{
+          borderBottom: '2px solid #222', width: '60%', margin: '2px auto 0'
+        }}></div>
+        <div style={{ textAlign: 'center', fontSize: 12, margin: 0, color: '#222', lineHeight: 1.1 }}>
+          --- Cảm ơn quý khách! ---
+        </div>
       </div>
     </div>
   );

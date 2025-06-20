@@ -12,6 +12,7 @@ import OrderCart from './components/OrderCart';
 import { MenuProvider } from './contexts/MenuContext';
 import { CssBaseline } from '@mui/material';
 
+
 const SESSION_TIMEOUT = 6 * 60 * 60 * 1000; // 6 tiếng
 
 const App = () => {
@@ -31,22 +32,15 @@ const App = () => {
     }
   }, [user, navigate]);
 
-  // Auto logout khi đóng tất cả tab
-  // useEffect(() => {
-  //   const handleBeforeUnload = () => {
-  //     auth.signOut();
-  //     localStorage.removeItem('loginTime');
-  //     sessionStorage.removeItem('loggedIn');
-  //   };
-  //   window.addEventListener('beforeunload', handleBeforeUnload);
-  //   return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  // }, []);
 
   if (loading) return <div>Loading...</div>;
+  
 
   return (
     <MenuProvider>
       <CssBaseline />
+         
+
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
@@ -76,7 +70,10 @@ const App = () => {
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+
+
     </MenuProvider>
+    
   );
 };
 

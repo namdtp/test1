@@ -8,8 +8,12 @@ import {
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import './Staff.css';
+// import KitchenAutoPrinter from './KitchenAutoPrinter';
+
+
 
 const Staff = () => {
+
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [mergeTableId, setMergeTableId] = useState('');
   const [orders, setOrders] = useState([]);
@@ -393,6 +397,8 @@ const handleSaveOrderNote = async () => {
   const goToOrderPage = () => navigate(`/order?tableId=${tableId}`);
   const goBackToTables = () => navigate('/tables');
 
+  
+
   return (
     <Box sx={{ p: { xs: 1, md: 4 }, maxWidth: '1000px', mx: 'auto' }}>
       {/* Header */}
@@ -609,7 +615,11 @@ const handleSaveOrderNote = async () => {
       </Dialog>
     </Box>
     
+    
   );
+
+ 
+
   
 };
 
